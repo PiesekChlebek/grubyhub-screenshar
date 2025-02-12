@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Share</title>
+</head>
+<body>
+    <h1>Multi-User Screen Sharing</h1>
+    
+    <div>
+        <button id="startScreenShare">Start Sharing</button>
+        <p>Your ID: <span id="myId"></span></p>
+    </div>
+
+    <div>
+        <input type="text" id="remoteId" placeholder="Enter host ID">
+        <button id="connect">Watch Screen</button>
+    </div>
+
+    <video id="screenVideo" autoplay playsinline></video>
+
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
