@@ -5,31 +5,47 @@ const videoElement = document.getElementById("screenVideo");
 const myIdSpan = document.getElementById("myId");
 
 const peer = new Peer();
+let localStream = null;
 
 peer.on("open", id => {
     myIdSpan.textContent = id;
 });
 
 peer.on("call", call => {
-    call.answer(); 
+    if (localStream) {
+        call.answer(localStream);
+    } else {
+        call.answer();
+    }
+    
     call.on("stream", remoteStream => {
         videoElement.srcObject = remoteStream;
+    });
+    
+    call.on("error", err => {
+        console.error("Call error:", err);
     });
 });
 
 startButton.addEventListener("click", async () => {
     try {
-        const stream = await navigator.mediaDevices.getDisplayMedia({
+        localStream = await navigator.mediaDevices.getDisplayMedia({
             video: { cursor: "always" },
             audio: true
         });
 
+        videoElement.srcObject = localStream;
+
         peer.on("connection", conn => {
             conn.on("open", () => {
-                const call = peer.call(conn.peer, stream);
-                call.on("stream", remoteStream => {
-                    videoElement.srcObject = remoteStream;
+                const call = peer.call(conn.peer, localStream);
+                call.on("error", err => {
+                    console.error("Call error:", err);
                 });
+            });
+            
+            conn.on("error", err => {
+                console.error("Connection error:", err);
             });
         });
 
@@ -39,12 +55,26 @@ startButton.addEventListener("click", async () => {
 });
 
 connectButton.addEventListener("click", () => {
-    const remoteId = remoteIdInput.value;
+    const remoteId = remoteIdInput.value.trim();
+    
+    if (!remoteId) {
+        console.error("Please enter a valid ID");
+        return;
+    }
+    
     const conn = peer.connect(remoteId);
+    
     conn.on("open", () => {
-        const call = peer.call(remoteId);
+        const call = peer.call(remoteId, new MediaStream());
         call.on("stream", remoteStream => {
             videoElement.srcObject = remoteStream;
         });
+        call.on("error", err => {
+            console.error("Call error:", err);
+        });
+    });
+    
+    conn.on("error", err => {
+        console.error("Connection error:", err);
     });
 });
