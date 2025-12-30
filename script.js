@@ -1,4 +1,5 @@
 const startButton = document.getElementById("startScreenShare");
+const stopButton = document.getElementById("stopScreenShare");
 const connectButton = document.getElementById("connect");
 const remoteIdInput = document.getElementById("remoteId");
 const videoElement = document.getElementById("screenVideo");
@@ -35,6 +36,14 @@ startButton.addEventListener("click", async () => {
         });
 
         videoElement.srcObject = localStream;
+        startButton.style.display = "none";
+        stopButton.style.display = "inline-block";
+
+        localStream.getTracks().forEach(track => {
+            track.onended = () => {
+                stopSharing();
+            };
+        });
 
         peer.on("connection", conn => {
             conn.on("open", () => {
@@ -53,6 +62,21 @@ startButton.addEventListener("click", async () => {
         console.error("Error sharing screen:", error);
     }
 });
+
+stopButton.addEventListener("click", () => {
+    stopSharing();
+});
+
+function stopSharing() {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    
+    videoElement.srcObject = null;
+    startButton.style.display = "inline-block";
+    stopButton.style.display = "none";
+}
 
 connectButton.addEventListener("click", () => {
     const remoteId = remoteIdInput.value.trim();
