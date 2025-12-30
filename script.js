@@ -4,23 +4,19 @@ const remoteIdInput = document.getElementById("remoteId");
 const videoElement = document.getElementById("screenVideo");
 const myIdSpan = document.getElementById("myId");
 
-// Create PeerJS connection
 const peer = new Peer();
 
-// Show generated ID
 peer.on("open", id => {
     myIdSpan.textContent = id;
 });
 
-// Handle incoming screen-sharing stream
 peer.on("call", call => {
-    call.answer(); // Answer the call
+    call.answer(); 
     call.on("stream", remoteStream => {
         videoElement.srcObject = remoteStream;
     });
 });
 
-// Start screen sharing
 startButton.addEventListener("click", async () => {
     try {
         const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -42,7 +38,6 @@ startButton.addEventListener("click", async () => {
     }
 });
 
-// Connect to a sharer
 connectButton.addEventListener("click", () => {
     const remoteId = remoteIdInput.value;
     const conn = peer.connect(remoteId);
