@@ -4,22 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Share</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Multi-User Screen Sharing</h1>
-    
-    <div>
-        <button id="startScreenShare">Start Sharing</button>
-        <button id="stopScreenShare" style="display:none;">Stop Sharing</button>
-        <p>Your ID: <span id="myId"></span></p>
-    </div>
+    <div class="container">
+        <header>
+            <h1>Screen Share</h1>
+        </header>
 
-    <div>
-        <input type="text" id="remoteId" placeholder="Enter host ID">
-        <button id="connect">Watch Screen</button>
-    </div>
+        <div class="controls-section">
+            <div class="control-group">
+                <h2>Share Your Screen</h2>
+                <div class="button-group">
+                    <button id="startScreenShare" class="btn btn-primary">Start Sharing</button>
+                    <button id="stopScreenShare" class="btn btn-danger" style="display:none;">Stop Sharing</button>
+                </div>
+                <div class="id-display">
+                    <label>Your ID:</label>
+                    <span id="myId" class="peer-id">Connecting...</span>
+                </div>
+            </div>
 
-    <video id="screenVideo" autoplay playsinline></video>
+            <div class="control-group">
+                <h2>Watch a Screen</h2>
+                <div class="input-group">
+                    <input type="text" id="remoteId" placeholder="Enter host ID">
+                    <button id="connect" class="btn btn-secondary">Connect</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="video-container">
+            <video id="screenVideo" autoplay playsinline></video>
+        </div>
+    </div>
 
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script src="script.js"></script>
