@@ -4,16 +4,48 @@ const connectButton = document.getElementById("connect");
 const remoteIdInput = document.getElementById("remoteId");
 const videoElement = document.getElementById("screenVideo");
 const myIdSpan = document.getElementById("myId");
+const displayNameSpan = document.getElementById("displayName");
 const chatMessages = document.getElementById("chatMessages");
 const chatInput = document.getElementById("chatInput");
 const sendMessageButton = document.getElementById("sendMessage");
+const nameModal = document.getElementById("nameModal");
+const nameInput = document.getElementById("nameInput");
+const setNameButton = document.getElementById("setName");
+const skipNameButton = document.getElementById("skipName");
 
 const peer = new Peer();
 let localStream = null;
 let connections = [];
+let userName = "";
+
+nameInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+        setUserName();
+    }
+});
+
+setNameButton.addEventListener("click", setUserName);
+
+skipNameButton.addEventListener("click", () => {
+    userName = peer.id ? peer.id.substring(0, 8) : "Anonymous";
+    displayNameSpan.textContent = userName;
+    nameModal.style.display = "none";
+});
+
+function setUserName() {
+    const name = nameInput.value.trim();
+    if (name) {
+        userName = name;
+        displayNameSpan.textContent = userName;
+        nameModal.style.display = "none";
+    }
+}
 
 peer.on("open", id => {
     myIdSpan.textContent = id;
+    if (!userName) {
+        skipNameButton.textContent = `Skip (use ${id.substring(0, 8)})`;
+    }
 });
 
 peer.on("connection", conn => {
@@ -41,11 +73,22 @@ function setupConnection(conn) {
     
     conn.on("data", data => {
         if (data.type === "chat") {
-            addChatMessage(data.peerId, data.message, data.timestamp);
+            addChatMessage(data.userName, data.message, data.timestamp);
+        } else if (data.type === "name_request") {
+            conn.send({
+                type: "name_response",
+                userName: userName
+            });
+        } else if (data.type === "name_response") {
+            // Store peer name if needed
         }
     });
     
     conn.on("open", () => {
+        conn.send({
+            type: "name_request"
+        });
+        
         if (localStream) {
             const call = peer.call(conn.peer, localStream);
             call.on("error", err => {
@@ -63,7 +106,7 @@ function setupConnection(conn) {
     });
 }
 
-function addChatMessage(peerId, message, timestamp) {
+function addChatMessage(userName, message, timestamp) {
     const messageDiv = document.createElement("div");
     messageDiv.className = "chat-message";
     
@@ -72,7 +115,7 @@ function addChatMessage(peerId, message, timestamp) {
     
     const peerSpan = document.createElement("span");
     peerSpan.className = "chat-message-peer";
-    peerSpan.textContent = peerId.substring(0, 8);
+    peerSpan.textContent = userName;
     
     const timeSpan = document.createElement("span");
     timeSpan.className = "chat-message-time";
@@ -108,15 +151,14 @@ function sendChatMessage() {
     if (!message) return;
     
     const timestamp = Date.now();
-    const peerId = peer.id;
     
-    addChatMessage(peerId, message, timestamp);
+    addChatMessage(userName, message, timestamp);
     
     connections.forEach(conn => {
         if (conn.open) {
             conn.send({
                 type: "chat",
-                peerId: peerId,
+                userName: userName,
                 message: message,
                 timestamp: timestamp
             });

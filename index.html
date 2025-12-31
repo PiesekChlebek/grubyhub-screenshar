@@ -7,6 +7,18 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="nameModal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to Screen Share</h2>
+            <p>Set your display name for this session</p>
+            <input type="text" id="nameInput" placeholder="Enter your name" maxlength="20">
+            <div class="modal-buttons">
+                <button id="setName" class="btn btn-primary">Set Name</button>
+                <button id="skipName" class="btn btn-secondary">Skip</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <h1>Screen Share</h1>
@@ -24,6 +36,10 @@
                         <div class="id-display">
                             <label>Your ID:</label>
                             <span id="myId" class="peer-id">Connecting...</span>
+                        </div>
+                        <div class="id-display">
+                            <label>Your Name:</label>
+                            <span id="displayName" class="peer-id"></span>
                         </div>
                     </div>
 
