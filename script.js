@@ -12,11 +12,15 @@ const nameModal = document.getElementById("nameModal");
 const nameInput = document.getElementById("nameInput");
 const setNameButton = document.getElementById("setName");
 const skipNameButton = document.getElementById("skipName");
+const cinemaModeButton = document.getElementById("cinemaMode");
+const exitCinemaButton = document.getElementById("exitCinema");
 
 const peer = new Peer();
 let localStream = null;
 let connections = [];
 let userName = "";
+let isCinemaMode = false;
+let mouseInactiveTimeout;
 
 nameInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
@@ -40,6 +44,79 @@ function setUserName() {
         nameModal.style.display = "none";
     }
 }
+
+cinemaModeButton.addEventListener("click", () => {
+    toggleCinemaMode();
+});
+
+exitCinemaButton.addEventListener("click", () => {
+    toggleCinemaMode();
+});
+
+document.addEventListener("mousemove", () => {
+    if (isCinemaMode) {
+        showExitButton();
+        resetMouseInactiveTimer();
+    }
+});
+
+function showExitButton() {
+    exitCinemaButton.style.opacity = "1";
+    exitCinemaButton.style.pointerEvents = "auto";
+    document.body.style.cursor = "default";
+}
+
+function hideExitButton() {
+    exitCinemaButton.style.opacity = "0";
+    exitCinemaButton.style.pointerEvents = "none";
+    document.body.style.cursor = "none";
+}
+
+function resetMouseInactiveTimer() {
+    clearTimeout(mouseInactiveTimeout);
+    mouseInactiveTimeout = setTimeout(() => {
+        if (isCinemaMode) {
+            hideExitButton();
+        }
+    }, 3000);
+}
+
+async function toggleCinemaMode() {
+    isCinemaMode = !isCinemaMode;
+    document.body.classList.toggle("cinema-mode", isCinemaMode);
+    
+    if (isCinemaMode) {
+        exitCinemaButton.style.display = "block";
+        showExitButton();
+        resetMouseInactiveTimer();
+        try {
+            await document.documentElement.requestFullscreen();
+        } catch (err) {
+            console.error("Error entering fullscreen:", err);
+        }
+    } else {
+        exitCinemaButton.style.display = "none";
+        clearTimeout(mouseInactiveTimeout);
+        document.body.style.cursor = "default";
+        try {
+            if (document.fullscreenElement) {
+                await document.exitFullscreen();
+            }
+        } catch (err) {
+            console.error("Error exiting fullscreen:", err);
+        }
+    }
+}
+
+document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && isCinemaMode) {
+        isCinemaMode = false;
+        document.body.classList.remove("cinema-mode");
+        exitCinemaButton.style.display = "none";
+        clearTimeout(mouseInactiveTimeout);
+        document.body.style.cursor = "default";
+    }
+});
 
 peer.on("open", id => {
     myIdSpan.textContent = id;
