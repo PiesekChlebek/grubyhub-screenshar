@@ -7,35 +7,70 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="nameModal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to Screen Share</h2>
+            <p>Set your display name for this session</p>
+            <input type="text" id="nameInput" placeholder="Enter your name" maxlength="20">
+            <div class="modal-buttons">
+                <button id="setName" class="btn btn-primary">Set Name</button>
+                <button id="skipName" class="btn btn-secondary">Skip</button>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
         <header>
             <h1>Screen Share</h1>
+            <div class="header-controls">
+                <button id="cinemaMode" class="btn btn-secondary">Cinema Mode</button>
+            </div>
         </header>
 
-        <div class="controls-section">
-            <div class="control-group">
-                <h2>Share Your Screen</h2>
-                <div class="button-group">
-                    <button id="startScreenShare" class="btn btn-primary">Start Sharing</button>
-                    <button id="stopScreenShare" class="btn btn-danger" style="display:none;">Stop Sharing</button>
+        <div class="main-content">
+            <div class="left-section">
+                <div class="controls-section">
+                    <div class="control-group">
+                        <h2>Share Your Screen</h2>
+                        <div class="button-group">
+                            <button id="startScreenShare" class="btn btn-primary">Start Sharing</button>
+                            <button id="stopScreenShare" class="btn btn-danger" style="display:none;">Stop Sharing</button>
+                        </div>
+                        <div class="id-display">
+                            <label>Your ID:</label>
+                            <span id="myId" class="peer-id">Connecting...</span>
+                        </div>
+                        <div class="id-display">
+                            <label>Your Name:</label>
+                            <span id="displayName" class="peer-id"></span>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <h2>Watch a Screen</h2>
+                        <div class="input-group">
+                            <input type="text" id="remoteId" placeholder="Enter host ID">
+                            <button id="connect" class="btn btn-secondary">Connect</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="id-display">
-                    <label>Your ID:</label>
-                    <span id="myId" class="peer-id">Connecting...</span>
+
+                <div class="video-container">
+                    <video id="screenVideo" autoplay playsinline></video>
+                    <button id="exitCinema" class="exit-cinema-btn" style="display:none;">Exit Cinema Mode</button>
                 </div>
             </div>
 
-            <div class="control-group">
-                <h2>Watch a Screen</h2>
-                <div class="input-group">
-                    <input type="text" id="remoteId" placeholder="Enter host ID">
-                    <button id="connect" class="btn btn-secondary">Connect</button>
+            <div class="chat-section">
+                <div class="chat-header">
+                    <h2>Live Chat</h2>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-container">
+                    <input type="text" id="chatInput" placeholder="Type a message...">
+                    <button id="sendMessage" class="btn btn-primary">Send</button>
                 </div>
             </div>
-        </div>
-
-        <div class="video-container">
-            <video id="screenVideo" autoplay playsinline></video>
         </div>
     </div>
 

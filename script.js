@@ -4,12 +4,129 @@ const connectButton = document.getElementById("connect");
 const remoteIdInput = document.getElementById("remoteId");
 const videoElement = document.getElementById("screenVideo");
 const myIdSpan = document.getElementById("myId");
+const displayNameSpan = document.getElementById("displayName");
+const chatMessages = document.getElementById("chatMessages");
+const chatInput = document.getElementById("chatInput");
+const sendMessageButton = document.getElementById("sendMessage");
+const nameModal = document.getElementById("nameModal");
+const nameInput = document.getElementById("nameInput");
+const setNameButton = document.getElementById("setName");
+const skipNameButton = document.getElementById("skipName");
+const cinemaModeButton = document.getElementById("cinemaMode");
+const exitCinemaButton = document.getElementById("exitCinema");
 
 const peer = new Peer();
 let localStream = null;
+let connections = [];
+let userName = "";
+let isCinemaMode = false;
+let mouseInactiveTimeout;
+
+nameInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+        setUserName();
+    }
+});
+
+setNameButton.addEventListener("click", setUserName);
+
+skipNameButton.addEventListener("click", () => {
+    userName = peer.id ? peer.id.substring(0, 8) : "Anonymous";
+    displayNameSpan.textContent = userName;
+    nameModal.style.display = "none";
+});
+
+function setUserName() {
+    const name = nameInput.value.trim();
+    if (name) {
+        userName = name;
+        displayNameSpan.textContent = userName;
+        nameModal.style.display = "none";
+    }
+}
+
+cinemaModeButton.addEventListener("click", () => {
+    toggleCinemaMode();
+});
+
+exitCinemaButton.addEventListener("click", () => {
+    toggleCinemaMode();
+});
+
+document.addEventListener("mousemove", () => {
+    if (isCinemaMode) {
+        showExitButton();
+        resetMouseInactiveTimer();
+    }
+});
+
+function showExitButton() {
+    exitCinemaButton.style.opacity = "1";
+    exitCinemaButton.style.pointerEvents = "auto";
+    document.body.style.cursor = "default";
+}
+
+function hideExitButton() {
+    exitCinemaButton.style.opacity = "0";
+    exitCinemaButton.style.pointerEvents = "none";
+    document.body.style.cursor = "none";
+}
+
+function resetMouseInactiveTimer() {
+    clearTimeout(mouseInactiveTimeout);
+    mouseInactiveTimeout = setTimeout(() => {
+        if (isCinemaMode) {
+            hideExitButton();
+        }
+    }, 3000);
+}
+
+async function toggleCinemaMode() {
+    isCinemaMode = !isCinemaMode;
+    document.body.classList.toggle("cinema-mode", isCinemaMode);
+    
+    if (isCinemaMode) {
+        exitCinemaButton.style.display = "block";
+        showExitButton();
+        resetMouseInactiveTimer();
+        try {
+            await document.documentElement.requestFullscreen();
+        } catch (err) {
+            console.error("Error entering fullscreen:", err);
+        }
+    } else {
+        exitCinemaButton.style.display = "none";
+        clearTimeout(mouseInactiveTimeout);
+        document.body.style.cursor = "default";
+        try {
+            if (document.fullscreenElement) {
+                await document.exitFullscreen();
+            }
+        } catch (err) {
+            console.error("Error exiting fullscreen:", err);
+        }
+    }
+}
+
+document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && isCinemaMode) {
+        isCinemaMode = false;
+        document.body.classList.remove("cinema-mode");
+        exitCinemaButton.style.display = "none";
+        clearTimeout(mouseInactiveTimeout);
+        document.body.style.cursor = "default";
+    }
+});
 
 peer.on("open", id => {
     myIdSpan.textContent = id;
+    if (!userName) {
+        skipNameButton.textContent = `Skip (use ${id.substring(0, 8)})`;
+    }
+});
+
+peer.on("connection", conn => {
+    setupConnection(conn);
 });
 
 peer.on("call", call => {
@@ -26,6 +143,114 @@ peer.on("call", call => {
     call.on("error", err => {
         console.error("Call error:", err);
     });
+});
+
+function setupConnection(conn) {
+    connections.push(conn);
+    
+    conn.on("data", data => {
+        if (data.type === "chat") {
+            addChatMessage(data.userName, data.message, data.timestamp);
+        } else if (data.type === "name_request") {
+            conn.send({
+                type: "name_response",
+                userName: userName
+            });
+        } else if (data.type === "name_response") {
+            // Store peer name if needed
+        }
+    });
+    
+    conn.on("open", () => {
+        conn.send({
+            type: "name_request"
+        });
+        
+        if (localStream) {
+            const call = peer.call(conn.peer, localStream);
+            call.on("error", err => {
+                console.error("Call error:", err);
+            });
+        }
+    });
+    
+    conn.on("close", () => {
+        connections = connections.filter(c => c !== conn);
+    });
+    
+    conn.on("error", err => {
+        console.error("Connection error:", err);
+    });
+}
+
+function addChatMessage(userName, message, timestamp) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "chat-message";
+    
+    const headerDiv = document.createElement("div");
+    headerDiv.className = "chat-message-header";
+    
+    const peerSpan = document.createElement("span");
+    peerSpan.className = "chat-message-peer";
+    peerSpan.textContent = userName;
+    
+    const timeSpan = document.createElement("span");
+    timeSpan.className = "chat-message-time";
+    timeSpan.textContent = formatTimestamp(timestamp);
+    
+    headerDiv.appendChild(peerSpan);
+    headerDiv.appendChild(timeSpan);
+    
+    const textDiv = document.createElement("div");
+    textDiv.className = "chat-message-text";
+    textDiv.textContent = message;
+    
+    messageDiv.appendChild(headerDiv);
+    messageDiv.appendChild(textDiv);
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${hours}:${minutes} ${day}/${month}/${year}`;
+}
+
+function sendChatMessage() {
+    const message = chatInput.value.trim();
+    if (!message) return;
+    
+    const timestamp = Date.now();
+    
+    addChatMessage(userName, message, timestamp);
+    
+    connections.forEach(conn => {
+        if (conn.open) {
+            conn.send({
+                type: "chat",
+                userName: userName,
+                message: message,
+                timestamp: timestamp
+            });
+        }
+    });
+    
+    chatInput.value = "";
+}
+
+sendMessageButton.addEventListener("click", sendChatMessage);
+
+chatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+        sendChatMessage();
+    }
 });
 
 startButton.addEventListener("click", async () => {
@@ -46,16 +271,7 @@ startButton.addEventListener("click", async () => {
         });
 
         peer.on("connection", conn => {
-            conn.on("open", () => {
-                const call = peer.call(conn.peer, localStream);
-                call.on("error", err => {
-                    console.error("Call error:", err);
-                });
-            });
-            
-            conn.on("error", err => {
-                console.error("Connection error:", err);
-            });
+            setupConnection(conn);
         });
 
     } catch (error) {
@@ -87,6 +303,7 @@ connectButton.addEventListener("click", () => {
     }
     
     const conn = peer.connect(remoteId);
+    setupConnection(conn);
     
     conn.on("open", () => {
         const call = peer.call(remoteId, new MediaStream());
@@ -96,9 +313,5 @@ connectButton.addEventListener("click", () => {
         call.on("error", err => {
             console.error("Call error:", err);
         });
-    });
-    
-    conn.on("error", err => {
-        console.error("Connection error:", err);
     });
 });
