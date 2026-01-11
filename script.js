@@ -14,6 +14,8 @@ const setNameButton = document.getElementById("setName");
 const skipNameButton = document.getElementById("skipName");
 const cinemaModeButton = document.getElementById("cinemaMode");
 const exitCinemaButton = document.getElementById("exitCinema");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+const videoContainer = document.querySelector(".video-container");
 
 const peer = new Peer();
 let localStream = null;
@@ -53,22 +55,40 @@ exitCinemaButton.addEventListener("click", () => {
     toggleCinemaMode();
 });
 
+fullscreenBtn.addEventListener("click", () => {
+    toggleFullscreen();
+});
+
+async function toggleFullscreen() {
+    try {
+        if (!document.fullscreenElement) {
+            await videoContainer.requestFullscreen();
+        } else {
+            await document.exitFullscreen();
+        }
+    } catch (err) {
+        console.error("Error toggling fullscreen:", err);
+    }
+}
+
 document.addEventListener("mousemove", () => {
     if (isCinemaMode) {
-        showExitButton();
+        showControls();
         resetMouseInactiveTimer();
     }
 });
 
-function showExitButton() {
-    exitCinemaButton.style.opacity = "1";
-    exitCinemaButton.style.pointerEvents = "auto";
+function showControls() {
+    const controls = document.querySelector(".video-controls");
+    controls.style.opacity = "1";
+    controls.style.pointerEvents = "auto";
     document.body.style.cursor = "default";
 }
 
-function hideExitButton() {
-    exitCinemaButton.style.opacity = "0";
-    exitCinemaButton.style.pointerEvents = "none";
+function hideControls() {
+    const controls = document.querySelector(".video-controls");
+    controls.style.opacity = "0";
+    controls.style.pointerEvents = "none";
     document.body.style.cursor = "none";
 }
 
@@ -76,7 +96,7 @@ function resetMouseInactiveTimer() {
     clearTimeout(mouseInactiveTimeout);
     mouseInactiveTimeout = setTimeout(() => {
         if (isCinemaMode) {
-            hideExitButton();
+            hideControls();
         }
     }, 3000);
 }
@@ -87,7 +107,8 @@ async function toggleCinemaMode() {
     
     if (isCinemaMode) {
         exitCinemaButton.style.display = "block";
-        showExitButton();
+        fullscreenBtn.style.display = "none";
+        showControls();
         resetMouseInactiveTimer();
         try {
             await document.documentElement.requestFullscreen();
@@ -96,8 +117,12 @@ async function toggleCinemaMode() {
         }
     } else {
         exitCinemaButton.style.display = "none";
+        fullscreenBtn.style.display = "block";
         clearTimeout(mouseInactiveTimeout);
         document.body.style.cursor = "default";
+        const controls = document.querySelector(".video-controls");
+        controls.style.opacity = "1";
+        controls.style.pointerEvents = "auto";
         try {
             if (document.fullscreenElement) {
                 await document.exitFullscreen();
@@ -113,8 +138,12 @@ document.addEventListener("fullscreenchange", () => {
         isCinemaMode = false;
         document.body.classList.remove("cinema-mode");
         exitCinemaButton.style.display = "none";
+        fullscreenBtn.style.display = "block";
         clearTimeout(mouseInactiveTimeout);
         document.body.style.cursor = "default";
+        const controls = document.querySelector(".video-controls");
+        controls.style.opacity = "1";
+        controls.style.pointerEvents = "auto";
     }
 });
 
@@ -156,8 +185,6 @@ function setupConnection(conn) {
                 type: "name_response",
                 userName: userName
             });
-        } else if (data.type === "name_response") {
-            // Store peer name if needed
         }
     });
     
@@ -268,10 +295,6 @@ startButton.addEventListener("click", async () => {
             track.onended = () => {
                 stopSharing();
             };
-        });
-
-        peer.on("connection", conn => {
-            setupConnection(conn);
         });
 
     } catch (error) {

@@ -269,10 +269,18 @@ body.cinema-mode .video-container {
     object-fit: contain;
 }
 
-.exit-cinema-btn {
+.video-controls {
     position: absolute;
-    top: 20px;
+    bottom: 20px;
     left: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.video-control-btn {
     padding: 10px 20px;
     background-color: rgba(0, 0, 0, 0.8);
     color: #f1f1f1;
@@ -281,12 +289,19 @@ body.cinema-mode .video-container {
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 10;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.exit-cinema-btn:hover {
+.video-control-btn:hover {
     background-color: rgba(63, 63, 63, 0.9);
+}
+
+.video-control-btn svg {
+    width: 20px;
+    height: 20px;
 }
 
 .chat-section {
